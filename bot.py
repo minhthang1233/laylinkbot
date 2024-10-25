@@ -11,9 +11,12 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 bot = TelegramClient('bot', API_ID, API_HASH)
 
 async def main():
-    # Kết nối bot với Telegram
-    await bot.start(bot_token=BOT_TOKEN)
-    print("Bot đã kết nối thành công và đang chạy...")
+    try:
+        # Kết nối bot với Telegram
+        await bot.start(bot_token=BOT_TOKEN)
+        print("Bot đã kết nối thành công và đang chạy...")
+    except Exception as e:
+        print(f"Lỗi kết nối: {e}")
 
 # Hàm lấy link từ văn bản
 def extract_links(text):
