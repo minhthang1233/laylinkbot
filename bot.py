@@ -1,44 +1,48 @@
 from telethon import TelegramClient, events
 import re
-import os
 
-# Thông tin bot từ các biến môi trường
-API_ID = int(os.getenv("API_ID"))
-API_HASH = os.getenv("API_HASH")
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+# Thông tin bot từ BotFather
+API_ID = 21357718  # Thay bằng API_ID của bạn
+API_HASH = "df3564e279df7787a6292c45b177524a"  # Thay bằng API_HASH của bạn
+BOT_TOKEN = "7596481021:AAEYehQLfPlWHNzuDsVF-rFR1zxaxaw4LeE "  # Thay bằng BOT_TOKEN bạn nhận được từ BotFather
 
 # Khởi tạo client cho bot
-bot = TelegramClient('bot', API_ID, API_HASH)
-
-async def main():
-    try:
-        # Kết nối bot với Telegram
-        await bot.start(bot_token=BOT_TOKEN)
-        print("Bot đã kết nối thành công và đang chạy...")
-    except Exception as e:
-        print(f"Lỗi kết nối: {e}")
+bot = TelegramClient('bot', API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
 # Hàm lấy link từ văn bản
 def extract_links(text):
-    # Tìm tất cả các link có trong tin nhắn
+    # Tìm tất cả các link dạng HTML hoặc HTTP/S
     links = re.findall(r'(https?://[^\s]+)', text)
     return links
 
-# Lắng nghe tin nhắn từ người dùng và xử lý
+# Lắng nghe tin nhắn từ người dùng
 @bot.on(events.NewMessage)
 async def handler(event):
-    text = event.message.message
-    print(f"Nhận tin nhắn: {text}")  # Log tin nhắn nhận được
-    links = extract_links(text)
-    if links:
-        await event.reply(f"Links found: {' '.join(links)}")
-        print("Đã tìm thấy link và trả lời người dùng.")  # Log phản hồi thành công
+    message = event.message  # Lấy tin nhắn
+    text = message.raw_text  # Lấy nội dung văn bản thô của tin nhắn
+    
+    # Kiểm tra nếu tin nhắn có dạng văn bản
+    if text:
+        links = extract_links(text)  # Trích xuất link từ văn bản
+        
+        # Kiểm tra nếu có link trong văn bản
+        if links:
+            await event.reply(f"Links found: {' '.join(links)}")
+        else:
+            await event.reply("Không có link nào trong tin nhắn này.")
+    
+    # Kiểm tra nếu tin nhắn là loại khác, ví dụ tin nhắn chuyển tiếp
+    elif message.is_forwarded:
+        forward_text = message.forward.text
+        links = extract_links(forward_text)
+        
+        if links:
+            await event.reply(f"Links found in forwarded message: {' '.join(links)}")
+        else:
+            await event.reply("Không có link nào trong tin nhắn chuyển tiếp này.")
     else:
-        await event.reply("Không có link nào trong tin nhắn này.")
-        print("Không có link trong tin nhắn.")  # Log khi không có link nào
+        await event.reply("Tin nhắn này không chứa văn bản có thể đọc được.")
 
-# Chạy bot và log quá trình
-print("Đang khởi động bot...")
-with bot:
-    bot.loop.run_until_complete(main())
-    bot.run_until_disconnected()
+# Chạy bot
+print("Bot đang chạy...")
+bot.run_until_disconnected()
